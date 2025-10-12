@@ -1,3 +1,4 @@
+cat > README.md << 'EOF'
 # Wurm Unlimited Server Installer
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -24,4 +25,49 @@ Run one of the following commands on your server to start the installation wizar
 
 **Using `curl`:**
 ```bash
-bash <(curl -sSL [https://raw.githubusercontent.com/YourUsername/wurm-unlimited-installer/main/install_wurm.sh](https://raw.githubusercontent.com/YourUsername/wurm-unlimited-installer/main/install_wurm.sh))
+bash <(curl -sSL [https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh](https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh))
+```
+Using `wget`:
+
+```bash
+bash <(wget -qO- [https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh](https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh))
+```
+
+## Post-Installation
+
+After the script finishes, you can manage your server with the wurm command.
+
+| Command               | Description                             |
+| --------------------- | --------------------------------------- |
+| `sudo wurm start`     | Starts the Wurm Unlimited server.       |
+| `sudo wurm stop`      | Stops the Wurm Unlimited server.        |
+| `sudo wurm restart`   | Restarts the server.                    |
+| `sudo wurm status`    | Checks the current status of the server.|
+| `sudo wurm logs`      | Shows the live server logs (press Ctrl+C to exit).|
+| `sudo wurm config`    | Opens the server configuration file for editing. |
+
+**IMPORTANT:** You must open the required ports in your server's firewall and/or your home router for players to be able to connect.
+
+* Game Port: 3724 TCP (or your custom port)
+* Steam Query Port: 27017 UDP (or your custom port)
+* Steam API Ports: 8766 TCP/UDP
+
+## Uninstallation
+To completely remove the server and all its files:
+
+```bash
+# Stop and disable the service
+sudo systemctl stop wurm
+sudo systemctl disable wurm
+
+# Remove the service file and management script
+sudo rm /etc/systemd/system/wurm.service
+sudo rm /usr/local/bin/wurm
+sudo systemctl daemon-reload
+
+# (Optional) Delete the steam user and all server files
+sudo userdel -r steam
+```
+## License
+
+This project is licensed under the MIT License.
