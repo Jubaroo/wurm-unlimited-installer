@@ -232,10 +232,16 @@ docker run -it ubuntu:24.04 bash
 
 ## Credits
 
-- Original installer concept from legacy Wurm community scripts (circa 2017)
-- Modernized for 2025 with enhanced UX and reliability
+- **Original installer** by [jonsjava](https://github.com/jonsjava) - [wurm_unlimited_server](https://github.com/jonsjava/wurm_unlimited_server)
+- **Modernized for 2025** by [Jubaroo](https://github.com/Jubaroo) with:
+  - Updated for modern Debian/Ubuntu (11/12 & 20.04/22.04/24.04)
+  - Enhanced whiptail UI with input validation
+  - Fixed ModLauncher integration
+  - Added xvfb for headless operation
+  - Improved server management with feedback
+  - UFW firewall auto-configuration
 - [WurmServerModLauncher](https://github.com/ago1024/WurmServerModLauncher) by ago1024
-- Developed by [Jubaroo](https://github.com/Jubaroo)
+- Special thanks to the Wurm Unlimited community for continued support
 
 ## Resources
 
