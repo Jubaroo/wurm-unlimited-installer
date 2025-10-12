@@ -24,6 +24,14 @@ fi
 
 whiptail --title "$TITLE" --msgbox "Welcome to the Wurm Unlimited Server Installer!\n\nThis will install:\n- SteamCMD\n- Wurm Unlimited Dedicated Server\n- Server ModLauncher\n- Xvfb for headless operation\n- Systemd service\n\nPress OK to continue" 15 70
 
+# Check for existing installation
+if [ -d "/home/steam/wurm" ]; then
+    if ! whiptail --title "$TITLE" --yesno "WARNING: Wurm server files already exist!\n\nThis will OVERWRITE your existing installation.\n\nContinue?" 12 60; then
+        echo "Installation cancelled."
+        exit 0
+    fi
+fi
+
 # Install required packages
 (
 echo "10" ; echo "XXX" ; echo "Updating package lists..." ; echo "XXX"
@@ -45,6 +53,15 @@ echo "100" ; echo "XXX" ; echo "Initial setup complete!" ; echo "XXX"
 sleep 1
 ) | whiptail --title "$TITLE" --gauge "Preparing installation..." 8 70 0
 
+# Check disk space
+AVAILABLE_SPACE=$(df /home/steam --output=avail | tail -1)
+REQUIRED_SPACE=5242880  # 5GB in KB
+
+if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
+    whiptail --title "$TITLE" --msgbox "ERROR: Insufficient disk space!\n\nRequired: 5GB\nAvailable: $((AVAILABLE_SPACE/1024/1024))GB" 10 60
+    exit 1
+fi
+
 # Download Wurm Unlimited Server
 (
 echo "0" ; echo "XXX" ; echo "Downloading Wurm Unlimited Server from Steam...\n\nThis may take several minutes.\nPlease be patient..." ; echo "XXX"
@@ -61,18 +78,19 @@ if whiptail --title "$TITLE" --yesno "Do you want to install the Wurm Server Mod
     MODLAUNCHER_VERSION="0.47"
     cd /tmp
     wget -q https://github.com/ago1024/WurmServerModLauncher/releases/download/v${MODLAUNCHER_VERSION}/server-modlauncher-${MODLAUNCHER_VERSION}.zip >> $LOGFILE 2>&1
-    
+
     echo "50" ; echo "XXX" ; echo "Extracting files..." ; echo "XXX"
     unzip -o -q server-modlauncher-${MODLAUNCHER_VERSION}.zip -d /home/steam/wurm/ >> $LOGFILE 2>&1
     chown -R steam:steam /home/steam/wurm/ >> $LOGFILE 2>&1
-    
+
     echo "75" ; echo "XXX" ; echo "Patching server..." ; echo "XXX"
     su - steam -c 'cd /home/steam/wurm && chmod +x patcher.sh && ./patcher.sh' >> $LOGFILE 2>&1
-    
+
     echo "100" ; echo "XXX" ; echo "ModLauncher installation finished!" ; echo "XXX"
     sleep 1
     ) | whiptail --title "$TITLE" --gauge "Installing ModLauncher..." 8 70 0
 
+    # Check if ModLauncher installed successfully (outside subshell)
     if [ -f /home/steam/wurm/WurmServerLauncher-patched ]; then
         chmod +x /home/steam/wurm/WurmServerLauncher-patched >> $LOGFILE 2>&1
         MODLAUNCHER_INSTALLED="true"
@@ -127,7 +145,7 @@ if [ $ip_count -gt 0 ]; then
 You'll still need to:\n\
 - Port forward on your router (home networks)\n\
 - Configure firewall rules (cloud/VPS)" 16 75
-    
+
     SERVER_IP=$(whiptail --title "$TITLE" --menu "Select the IP address for your server:" 20 70 $ip_count "${ip_list[@]}" 3>&1 1>&2 2>&3)
 else
     SERVER_IP=$(whiptail --title "$TITLE" --inputbox "Enter the IP address for the server:" 8 70 "" 3>&1 1>&2 2>&3)
@@ -135,6 +153,8 @@ fi
 
 # Server Name
 SERVER_NAME=$(whiptail --title "$TITLE" --inputbox "What would you like to name your server?\n(No single quotes)" 10 70 "My Wurm Server" 3>&1 1>&2 2>&3)
+# Sanitize server name - remove problematic characters
+SERVER_NAME=$(echo "$SERVER_NAME" | sed "s/'//g" | sed 's/"//g')
 
 # Admin Password
 ADMIN_PWD=$(whiptail --title "$TITLE" --passwordbox "Set an Admin Password\n\nThis unlocks in-game admin commands to change:\n- Skill gain rates\n- Field growth times\n- Other gameplay settings" 12 70 3>&1 1>&2 2>&3)
@@ -148,6 +168,10 @@ fi
 
 # Max Players
 MAX_PLAYERS=$(whiptail --title "$TITLE" --inputbox "Maximum number of players (1-200):" 8 70 "100" 3>&1 1>&2 2>&3)
+if ! [[ "$MAX_PLAYERS" =~ ^[0-9]+$ ]] || [ "$MAX_PLAYERS" -lt 1 ] || [ "$MAX_PLAYERS" -gt 200 ]; then
+    MAX_PLAYERS=100
+    whiptail --title "$TITLE" --msgbox "Invalid player count. Using default: 100" 8 50
+fi
 
 # Home Kingdom
 HOME_KINGDOM=$(whiptail --title "$TITLE" --menu "Select the Home Kingdom:\n\nKingdom determines PvP rules and server type." 20 70 5 \
@@ -190,15 +214,30 @@ fi
 
 # External Port
 EXTERNAL_PORT=$(whiptail --title "$TITLE" --inputbox "Game Port (clients connect here):\n\nDefault: 3724" 10 70 "3724" 3>&1 1>&2 2>&3)
+if ! [[ "$EXTERNAL_PORT" =~ ^[0-9]+$ ]] || [ "$EXTERNAL_PORT" -lt 1024 ] || [ "$EXTERNAL_PORT" -gt 65535 ]; then
+    EXTERNAL_PORT=3724
+    whiptail --title "$TITLE" --msgbox "Invalid port. Using default: 3724" 8 50
+fi
 
 # Query Port
 QUERY_PORT=$(whiptail --title "$TITLE" --inputbox "Steam Query Port:\n\nAllows server browsers to see your server\nRange: 27016-27030" 11 70 "27017" 3>&1 1>&2 2>&3)
+if ! [[ "$QUERY_PORT" =~ ^[0-9]+$ ]] || [ "$QUERY_PORT" -lt 27016 ] || [ "$QUERY_PORT" -gt 27030 ]; then
+    QUERY_PORT=27017
+    whiptail --title "$TITLE" --msgbox "Invalid query port. Using default: 27017" 8 50
+fi
 
 # RMI Ports (with warning)
 whiptail --title "$TITLE" --msgbox "The next settings are for multi-server setups.\n\nIf you're running a single server, just use the defaults.\n\nWARNING: Never expose RMI ports to the internet!" 12 70
 
 RMI_PORT=$(whiptail --title "$TITLE" --inputbox "RMI Port (multi-server only):" 8 70 "7220" 3>&1 1>&2 2>&3)
+if ! [[ "$RMI_PORT" =~ ^[0-9]+$ ]] || [ "$RMI_PORT" -lt 1024 ] || [ "$RMI_PORT" -gt 65535 ]; then
+    RMI_PORT=7220
+fi
+
 RMI_REG_PORT=$(whiptail --title "$TITLE" --inputbox "RMI Registry Port (multi-server only):" 8 70 "7221" 3>&1 1>&2 2>&3)
+if ! [[ "$RMI_REG_PORT" =~ ^[0-9]+$ ]] || [ "$RMI_REG_PORT" -lt 1024 ] || [ "$RMI_REG_PORT" -gt 65535 ]; then
+    RMI_REG_PORT=7221
+fi
 
 # Login Server
 LOGIN_SERVER="true"
@@ -399,6 +438,17 @@ SERVICEUNIT
 
 systemctl daemon-reload >> $LOGFILE 2>&1
 systemctl enable wurm.service >> $LOGFILE 2>&1
+
+# Optional: Configure UFW firewall
+if command -v ufw &> /dev/null; then
+    if whiptail --title "$TITLE" --yesno "UFW firewall detected!\n\nAutomatically open required ports?\n\n- 8766 TCP/UDP (Steam)\n- 27016-27030 UDP (Query)\n- $EXTERNAL_PORT TCP (Game)" 14 60; then
+        ufw allow 8766/tcp >> $LOGFILE 2>&1
+        ufw allow 8766/udp >> $LOGFILE 2>&1
+        ufw allow 27016:27030/udp >> $LOGFILE 2>&1
+        ufw allow $EXTERNAL_PORT/tcp >> $LOGFILE 2>&1
+        whiptail --title "$TITLE" --msgbox "✓ Firewall ports opened successfully!" 8 50
+    fi
+fi
 
 echo "95" ; echo "XXX" ; echo "Creating management helper..." ; echo "XXX"
 
