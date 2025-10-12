@@ -1,5 +1,9 @@
 # Wurm Unlimited Server Installer for Debian/Ubuntu
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Shell Script](https://img.shields.io/badge/Shell-Bash-green.svg)](https://www.gnu.org/software/bash/)
+[![Platform](https://img.shields.io/badge/Platform-Debian%20%7C%20Ubuntu-blue.svg)](https://github.com/Jubaroo/wurm-unlimited-installer)
+
 A modern, user-friendly installer script for the Wurm Unlimited dedicated server with full mod support.
 
 ## Features
@@ -31,21 +35,11 @@ The installer will guide you through:
 
 ## Requirements
 
-### System Requirements
 - **Operating System**: Debian 11/12 or Ubuntu 20.04/22.04/24.04
 - **Privileges**: Root access (sudo)
 - **Disk Space**: 5GB minimum free space
 - **Network**: Internet connection for downloads
 - **Architecture**: x86_64 (64-bit)
-
-### User Prerequisites
-This installer assumes familiarity with:
-- Linux command line operations
-- Basic server administration (SSH, file permissions, etc.)
-- Network configuration (port forwarding, firewall rules)
-- Text editor usage (nano, vim, etc.)
-
-**Note**: While the installer automates most tasks, some post-installation configuration and troubleshooting may require Linux server experience.
 
 ## Server Management
 
@@ -244,12 +238,12 @@ docker run -it ubuntu:24.04 bash
 
 - **Original installer** by [jonsjava](https://github.com/jonsjava) - [wurm_unlimited_server](https://github.com/jonsjava/wurm_unlimited_server)
 - **Modernized for 2025** by [Jubaroo](https://github.com/Jubaroo) with:
-  - Updated for modern Debian/Ubuntu (11/12 & 20.04/22.04/24.04)
-  - Enhanced whiptail UI with input validation
-  - Fixed ModLauncher integration
-  - Added xvfb for headless operation
-  - Improved server management with feedback
-  - UFW firewall auto-configuration
+    - Updated for modern Debian/Ubuntu (11/12 & 20.04/22.04/24.04)
+    - Enhanced whiptail UI with input validation
+    - Fixed ModLauncher integration
+    - Added xvfb for headless operation
+    - Improved server management with feedback
+    - UFW firewall auto-configuration
 - [WurmServerModLauncher](https://github.com/ago1024/WurmServerModLauncher) by ago1024
 - Special thanks to the Wurm Unlimited community for continued support
 
