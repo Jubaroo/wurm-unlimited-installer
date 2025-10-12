@@ -25,12 +25,12 @@ Run one of the following commands on your server to start the installation wizar
 
 **Using `curl`:**
 ```bash
-bash <(curl -sSL [https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh](https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh))
+curl -sSL https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh | sudo bash
 ```
 Using `wget`:
 
 ```bash
-bash <(wget -qO- [https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh](https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh))
+wget -qO- https://raw.githubusercontent.com/jubaroo/wurm-unlimited-installer/master/src/modern_installer_ui.sh | sudo bash
 ```
 
 ## Post-Installation
