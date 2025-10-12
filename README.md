@@ -31,11 +31,21 @@ The installer will guide you through:
 
 ## Requirements
 
+### System Requirements
 - **Operating System**: Debian 11/12 or Ubuntu 20.04/22.04/24.04
 - **Privileges**: Root access (sudo)
 - **Disk Space**: 5GB minimum free space
 - **Network**: Internet connection for downloads
 - **Architecture**: x86_64 (64-bit)
+
+### User Prerequisites
+This installer assumes familiarity with:
+- Linux command line operations
+- Basic server administration (SSH, file permissions, etc.)
+- Network configuration (port forwarding, firewall rules)
+- Text editor usage (nano, vim, etc.)
+
+**Note**: While the installer automates most tasks, some post-installation configuration and troubleshooting may require Linux server experience.
 
 ## Server Management
 
