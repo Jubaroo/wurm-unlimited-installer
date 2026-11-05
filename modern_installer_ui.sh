@@ -34,11 +34,15 @@ fi
 
 # Install required packages
 (
-echo "10" ; echo "XXX" ; echo "Updating package lists..." ; echo "XXX"
+echo "10" ; echo "XXX" ; echo "Enabling 32-bit architecture & updating package lists..." ; echo "XXX"
+dpkg --add-architecture i386 >> $LOGFILE 2>&1 || true
 apt-get update >> $LOGFILE 2>&1
 
-echo "30" ; echo "XXX" ; echo "Installing required packages..." ; echo "XXX"
-apt-get install -y xvfb lib32gcc-s1 curl wget tar unzip whiptail >> $LOGFILE 2>&1
+echo "30" ; echo "XXX" ; echo "Installing required dependencies..." ; echo "XXX"
+# SteamCMD requires 32-bit runtime libraries (lib32gcc-s1, lib32stdc++6 or libc6:i386).
+# Java/Xvfb headless operation requires X11 client libraries (libxtst6, libxi6, etc.).
+apt-get install -y xvfb lib32gcc-s1 lib32stdc++6 libc6:i386 libxtst6 libx11-6 libxext6 libxi6 libxrender1 ca-certificates curl wget tar unzip whiptail >> $LOGFILE 2>&1 || \
+apt-get install -y xvfb lib32gcc-s1 lib32stdc++6 libxtst6 libx11-6 libxext6 libxi6 libxrender1 ca-certificates curl wget tar unzip whiptail >> $LOGFILE 2>&1
 
 echo "50" ; echo "XXX" ; echo "Setting up steam user..." ; echo "XXX"
 if ! id "steam" &>/dev/null; then
@@ -48,6 +52,10 @@ fi
 echo "70" ; echo "XXX" ; echo "Installing SteamCMD..." ; echo "XXX"
 su - steam -c 'mkdir -p /home/steam/steamcmd' >> $LOGFILE 2>&1
 su - steam -c 'cd /home/steam/steamcmd && curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf -' >> $LOGFILE 2>&1
+
+echo "85" ; echo "XXX" ; echo "Bootstrapping SteamCMD (initial self-update)..." ; echo "XXX"
+# Run once bare so SteamCMD updates itself without dropping subsequent app_update commands
+su - steam -c '/home/steam/steamcmd/steamcmd.sh +quit' >> $LOGFILE 2>&1
 
 echo "100" ; echo "XXX" ; echo "Initial setup complete!" ; echo "XXX"
 sleep 1
@@ -62,13 +70,27 @@ if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
     exit 1
 fi
 
-# Download Wurm Unlimited Server
-(
-echo "0" ; echo "XXX" ; echo "Downloading Wurm Unlimited Server from Steam...\n\nThis may take several minutes.\nPlease be patient..." ; echo "XXX"
-su - steam -c '/home/steam/steamcmd/steamcmd.sh +force_install_dir /home/steam/wurm +login anonymous +app_update 402370 validate +quit' >> $LOGFILE 2>&1
-echo "100" ; echo "XXX" ; echo "Download complete!" ; echo "XXX"
-sleep 1
-) | whiptail --title "$TITLE" --gauge "Downloading server files..." 10 70 0
+# Download Wurm Unlimited Server with validation and retry
+DOWNLOAD_SUCCESS="false"
+for attempt in 1 2; do
+    (
+    echo "0" ; echo "XXX" ; echo "Downloading Wurm Unlimited Server from Steam (Attempt $attempt/2)...\n\nThis may take several minutes.\nPlease be patient..." ; echo "XXX"
+    su - steam -c '/home/steam/steamcmd/steamcmd.sh +force_install_dir /home/steam/wurm +login anonymous +app_update 402370 validate +quit' >> $LOGFILE 2>&1
+    echo "100" ; echo "XXX" ; echo "Download attempt finished!" ; echo "XXX"
+    sleep 1
+    ) | whiptail --title "$TITLE" --gauge "Downloading server files..." 10 70 0
+
+    if [ -f "/home/steam/wurm/server.jar" ] || [ -f "/home/steam/wurm/WurmServerLauncher" ]; then
+        DOWNLOAD_SUCCESS="true"
+        break
+    fi
+    echo "Wurm server files not found after attempt $attempt, retrying..." >> $LOGFILE
+done
+
+if [ "$DOWNLOAD_SUCCESS" != "true" ]; then
+    whiptail --title "$TITLE" --msgbox "ERROR: Wurm Unlimited server files failed to download from Steam!\n\nThe server cannot start without these files.\nPlease inspect the log file for details:\n$LOGFILE" 14 70
+    exit 1
+fi
 
 # Ask about modlauncher
 MODLAUNCHER_INSTALLED="false"
@@ -100,18 +122,33 @@ if whiptail --title "$TITLE" --yesno "Do you want to install the Wurm Server Mod
     fi
 fi
 
-# Setup X11 libraries
+# Setup X11 and Steamworks libraries
 (
-echo "50" ; echo "XXX" ; echo "Copying X11 libraries..." ; echo "XXX"
-JAVA_LIB_PATH="/home/steam/wurm/runtime/jre1.8.0_172/lib/amd64"
-cp /lib/x86_64-linux-gnu/libX11.so.6 $JAVA_LIB_PATH/ >> $LOGFILE 2>&1
-cp /lib/x86_64-linux-gnu/libXext.so.6 $JAVA_LIB_PATH/ >> $LOGFILE 2>&1
-cp /lib/x86_64-linux-gnu/libXi.so.6 $JAVA_LIB_PATH/ >> $LOGFILE 2>&1
-cp /lib/x86_64-linux-gnu/libXrender.so.1 $JAVA_LIB_PATH/ >> $LOGFILE 2>&1
-cp /usr/lib/x86_64-linux-gnu/libXtst.so.6 $JAVA_LIB_PATH/ >> $LOGFILE 2>&1
-cp /usr/lib/x86_64-linux-gnu/libXtst.so.6.1.0 $JAVA_LIB_PATH/ >> $LOGFILE 2>&1
-chown steam:steam $JAVA_LIB_PATH/libX* >> $LOGFILE 2>&1
-echo "100" ; echo "XXX" ; echo "Headless support configured!" ; echo "XXX"
+echo "50" ; echo "XXX" ; echo "Configuring headless operation and runtime libraries..." ; echo "XXX"
+JAVA_LIB_PATH=$(find /home/steam/wurm/runtime -type d -name "amd64" 2>/dev/null | head -n 1)
+if [ -z "$JAVA_LIB_PATH" ]; then
+    JAVA_LIB_PATH="/home/steam/wurm/runtime/jre1.8.0_172/lib/amd64"
+fi
+
+if [ -d "$JAVA_LIB_PATH" ]; then
+    for lib in libX11.so.6 libXext.so.6 libXi.so.6 libXrender.so.1 libXtst.so.6; do
+        if [ -f "/usr/lib/x86_64-linux-gnu/$lib" ]; then
+            cp "/usr/lib/x86_64-linux-gnu/$lib" "$JAVA_LIB_PATH/" >> $LOGFILE 2>&1 || true
+        elif [ -f "/lib/x86_64-linux-gnu/$lib" ]; then
+            cp "/lib/x86_64-linux-gnu/$lib" "$JAVA_LIB_PATH/" >> $LOGFILE 2>&1 || true
+        fi
+    done
+    cp /usr/lib/x86_64-linux-gnu/libXtst.so.6* "$JAVA_LIB_PATH/" >> $LOGFILE 2>&1 || true
+    chown -f steam:steam "$JAVA_LIB_PATH"/libX* >> $LOGFILE 2>&1 || true
+fi
+
+# Setup 64-bit steamclient.so link for Steamworks SDK
+su - steam -c 'mkdir -p /home/steam/.steam/sdk64' >> $LOGFILE 2>&1
+if [ -f "/home/steam/wurm/linux64/steamclient.so" ]; then
+    su - steam -c 'ln -sf /home/steam/wurm/linux64/steamclient.so /home/steam/.steam/sdk64/steamclient.so' >> $LOGFILE 2>&1
+fi
+
+echo "100" ; echo "XXX" ; echo "Headless support and libraries configured!" ; echo "XXX"
 sleep 1
 ) | whiptail --title "$TITLE" --gauge "Setting up headless operation..." 8 70 0
 
@@ -359,6 +396,12 @@ export DISPLAY=:99
 # Ensure LD_LIBRARY_PATH includes all library directories
 export LD_LIBRARY_PATH="./linux64:./nativelibs:./lib:${LD_LIBRARY_PATH}"
 
+# Ensure steamclient.so is available for 64-bit Steam SDK
+mkdir -p "$HOME/.steam/sdk64" 2>/dev/null
+if [ -f "./linux64/steamclient.so" ]; then
+    ln -sf "$(pwd)/linux64/steamclient.so" "$HOME/.steam/sdk64/steamclient.so" 2>/dev/null
+fi
+
 # Automatically detect and use the best available launcher
 if [ -f WurmServerLauncher-patched ]; then
   LAUNCHER='./WurmServerLauncher-patched'
@@ -409,7 +452,11 @@ chown steam:steam /home/steam/wurm/start-wurm.sh >> $LOGFILE 2>&1
 echo "80" ; echo "XXX" ; echo "Setting up world files..." ; echo "XXX"
 
 if [ ! -d "/home/steam/wurm/$SERVER_TYPE" ]; then
-    su - steam -c "cp -R /home/steam/wurm/dist/$SERVER_TYPE /home/steam/wurm/" >> $LOGFILE 2>&1
+    if [ -d "/home/steam/wurm/dist/$SERVER_TYPE" ]; then
+        su - steam -c "cp -R /home/steam/wurm/dist/$SERVER_TYPE /home/steam/wurm/" >> $LOGFILE 2>&1
+    else
+        echo "WARNING: /home/steam/wurm/dist/$SERVER_TYPE not found!" >> $LOGFILE 2>&1
+    fi
 fi
 
 echo "90" ; echo "XXX" ; echo "Creating systemd service..." ; echo "XXX"
