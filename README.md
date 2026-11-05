@@ -8,14 +8,14 @@ A modern, user-friendly installer script for the Wurm Unlimited dedicated server
 
 ## Features
 
-- 🚀 **Easy Installation** - Interactive whiptail UI guides you through setup
-- 🎮 **ModLauncher Support** - Optional server mod system installation
-- 🖥️ **Headless Operation** - Xvfb integration for servers without displays
-- ⚙️ **Systemd Service** - Automatic startup and easy management
-- 🛠️ **Management Helper** - Simple `wurm` command for server control
-- 🔒 **Input Validation** - Prevents configuration errors
-- 🔥 **UFW Integration** - Optional automatic firewall configuration
-- ✅ **Safety Checks** - Disk space verification and re-installation warnings
+- **Easy Installation** - Interactive whiptail UI guides you through setup
+- **ModLauncher Support** - Optional server mod system installation
+- **Headless Operation** - Xvfb integration for servers without displays
+- **Systemd Service** - Automatic startup and easy management
+- **Management Helper** - Simple `wurm` command for server control
+- **Input Validation** - Prevents configuration errors
+- **UFW Integration** - Optional automatic firewall configuration
+- **Safety Checks** - Disk space verification and re-installation warnings
 
 ## Quick Start
 
