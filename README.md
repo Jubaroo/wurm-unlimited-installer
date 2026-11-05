@@ -8,14 +8,14 @@ A modern, user-friendly installer script for the Wurm Unlimited dedicated server
 
 ## Features
 
-- 🚀 **Easy Installation** - Interactive whiptail UI guides you through setup
-- 🎮 **ModLauncher Support** - Optional server mod system installation
-- 🖥️ **Headless Operation** - Xvfb integration for servers without displays
-- ⚙️ **Systemd Service** - Automatic startup and easy management
-- 🛠️ **Management Helper** - Simple `wurm` command for server control
-- 🔒 **Input Validation** - Prevents configuration errors
-- 🔥 **UFW Integration** - Optional automatic firewall configuration
-- ✅ **Safety Checks** - Disk space verification and re-installation warnings
+- **Easy Installation** - Interactive whiptail UI guides you through setup
+- **ModLauncher Support** - Optional server mod system installation
+- **Headless Operation** - Xvfb integration for servers without displays
+- **Systemd Service** - Automatic startup and easy management
+- **Management Helper** - Simple `wurm` command for server control
+- **Input Validation** - Prevents configuration errors
+- **UFW Integration** - Optional automatic firewall configuration
+- **Safety Checks** - Disk space verification and re-installation warnings
 
 ## Quick Start
 
@@ -257,27 +257,5 @@ docker run -it ubuntu:24.04 bash
 ## License
 
 MIT License
-
-Copyright (c) 2025 Jubaroo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
----
 
 **⭐ If this installer helped you, please star the repository!**
